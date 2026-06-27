@@ -4,8 +4,8 @@ export default function Settings({ api, onClose }) {
   const [settings, setSettings] = useState({
     system_prompt: '',
     temperature: 0.9,
-    max_context_rounds: 20,
-    max_reply_tokens: 1000,
+    context_rounds: 20,
+    max_tokens: 1000,
   })
   const [saved, setSaved] = useState(false)
 
@@ -57,8 +57,8 @@ export default function Settings({ api, onClose }) {
         <label>保留对话轮数</label>
         <input
           type="number" min="5" max="50"
-          value={settings.max_context_rounds}
-          onChange={e => setSettings({ ...settings, max_context_rounds: parseInt(e.target.value, 10) })}
+          value={settings.context_rounds}
+          onChange={e => setSettings({ ...settings, context_rounds: parseInt(e.target.value, 10) })}
         />
       </div>
 
@@ -66,8 +66,8 @@ export default function Settings({ api, onClose }) {
         <label>最大回复字数</label>
         <input
           type="number" min="200" max="4000"
-          value={settings.max_reply_tokens}
-          onChange={e => setSettings({ ...settings, max_reply_tokens: parseInt(e.target.value, 10) })}
+          value={settings.max_tokens}
+          onChange={e => setSettings({ ...settings, max_tokens: parseInt(e.target.value, 10) })}
         />
       </div>
 
