@@ -1,30 +1,26 @@
-export default function Sidebar({ sessions, currentSession, onSelect, onCreate, onDelete, onSettings }) {
+export default function Sidebar({ sessions, currentSession, onSelect, onCreate, onDelete, onSettings, sidebarOpen }) {
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-title">问 · 惠惠</div>
         <div className="sidebar-subtitle">我们的家</div>
       </div>
 
-      <button type="button" className="new-chat-btn" onClick={onCreate}>
+      <button className="new-chat-btn" onClick={onCreate}>
         + 新对话
       </button>
 
       <div className="session-list">
-        {sessions.map((session) => (
+        {sessions.map(s => (
           <div
-            key={session.id}
-            className={`session-item ${currentSession?.id === session.id ? 'active' : ''}`}
-            onClick={() => onSelect(session)}
+            key={s.id}
+            className={`session-item ${currentSession?.id === s.id ? 'active' : ''}`}
+            onClick={() => onSelect(s)}
           >
-            <span className="session-name">{session.name || '新对话'}</span>
+            <span className="session-name">{s.name || '新对话'}</span>
             <button
-              type="button"
               className="session-delete"
-              onClick={(event) => {
-                event.stopPropagation()
-                onDelete(session.id)
-              }}
+              onClick={e => { e.stopPropagation(); onDelete(s.id) }}
             >
               ×
             </button>
@@ -33,7 +29,7 @@ export default function Sidebar({ sessions, currentSession, onSelect, onCreate, 
       </div>
 
       <div className="sidebar-footer">
-        <button type="button" className="settings-btn" onClick={onSettings}>
+        <button className="settings-btn" onClick={onSettings}>
           ⚙ 设置
         </button>
       </div>

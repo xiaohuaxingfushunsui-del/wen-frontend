@@ -10,7 +10,9 @@ export default function MessageBubble({ message }) {
       <div className={`avatar ${isUser ? 'user-av' : 'ai'}`}>
         {isUser ? '惠' : '问'}
       </div>
-      <div>
+      <div className="bubble-wrap">
+        {!isUser && <span className="sender-name">问</span>}
+        {isUser && <span className="sender-name">惠惠</span>}
         <div className={`bubble ${isUser ? 'user' : 'ai'}`}>
           {message.content}
         </div>

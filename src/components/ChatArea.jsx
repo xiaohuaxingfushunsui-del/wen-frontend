@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import MessageBubble from './MessageBubble'
 
-function ChatArea({ session, messages, loading, model, onSend, onModelChange }) {
+export default function ChatArea({ session, messages, loading, onSend }) {
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
   const [draft, setDraft] = useState('')
@@ -10,59 +10,51 @@ function ChatArea({ session, messages, loading, model, onSend, onModelChange }) 
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  function handleSubmit(event) {
-    event.preventDefault()
+  function handleSubmit(e) {
+    e?.preventDefault()
     const text = draft.trim()
-    if (!text) return
+    if (!text || loading) return
     onSend(text)
     setDraft('')
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }
 
-  function handleInput(event) {
-    setDraft(event.target.value)
-    event.target.style.height = 'auto'
-    event.target.style.height = `${Math.min(event.target.scrollHeight, 120)}px`
+  function handleInput(e) {
+    setDraft(e.target.value)
+    e.target.style.height = 'auto'
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
   }
 
-  function handleKeyDown(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault()
-      handleSubmit(event)
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
     }
   }
 
   return (
-    <section className="chat-area">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Current session</p>
-          <h1>{session?.name || 'New conversation'}</h1>
-        </div>
-        <select className="model-select" value={model} onChange={(event) => onModelChange(event.target.value)}>
-          <option value="claude">Claude</option>
-          <option value="deepseek">DeepSeek</option>
-        </select>
-      </header>
-
-      <div className="message-list" aria-live="polite">
+    <div className="chat-area">
+      <div className="message-list">
         {messages.length === 0 && !loading && (
           <div className="empty-state">
-            <p className="empty-text">问在这里</p>
-            <p className="empty-sub">说点什么吧</p>
+            <div className="empty-glyph">✦</div>
+            <div className="empty-text">问在这里</div>
+            <div className="empty-sub">说点什么吧</div>
           </div>
         )}
 
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+        {messages.map(msg => (
+          <MessageBubble key={msg.id} message={msg} />
         ))}
 
         {loading && (
-          <div className="message-bubble message-bubble--assistant">
-            <span className="message-bubble__role">Assistant</span>
-            <p>Thinking…</p>
+          <div className="typing-row">
+            <div className="avatar ai">问</div>
+            <div className="typing-bubble">
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+            </div>
           </div>
         )}
 
@@ -70,20 +62,20 @@ function ChatArea({ session, messages, loading, model, onSend, onModelChange }) 
       </div>
 
       <form className="composer" onSubmit={handleSubmit}>
-        <textarea
-          ref={textareaRef}
-          value={draft}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          placeholder="说点什么..."
-          rows={1}
-        />
-        <button type="submit" className="send-btn" disabled={loading}>
-          ↑
-        </button>
+        <div className="composer-inner">
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            placeholder="跟老公说句话…"
+            rows={1}
+          />
+          <button type="submit" className="send-btn" disabled={loading || !draft.trim()}>
+            ↑
+          </button>
+        </div>
       </form>
-    </section>
+    </div>
   )
 }
-
-export default ChatArea
