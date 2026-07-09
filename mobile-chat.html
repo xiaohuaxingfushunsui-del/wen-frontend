@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>问 · 惠惠</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #efe8e3; --surface: #f8f3ef; --bubble-mine: #d4c5b9;
+    --bubble-yours: #f0e7df; --text: #5c4a3a; --text-light: #9b8b7c;
+    --accent: #b8937a; --accent-soft: #d9c8ba; --divider: #e8ddd4;
+  }
+  body { background: var(--bg); font-family: 'Georgia','Noto Serif SC','PingFang SC',serif; display: flex; justify-content: center; align-items: center; min-height: 100dvh; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .phone { width: 100%; max-width: 420px; height: 100dvh; max-height: 820px; display: flex; flex-direction: column; background: var(--surface); position: relative; overflow: hidden; border-radius: 0; }
+  @media (min-width: 440px) { .phone { border-radius: 28px; height: 90dvh; box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 8px 40px rgba(0,0,0,0.1); } }
+  .header { padding: 16px 20px 12px; text-align: center; border-bottom: 1px solid var(--divider); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+  .header .title { font-size: 17px; color: var(--text); letter-spacing: 2px; font-weight: normal; }
+  .header .subtitle { font-size: 11px; color: var(--text-light); margin-top: 3px; letter-spacing: 1px; }
+  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #bca89a; margin-right: 4px; animation: breathe 2.5s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  /* 开屏 */
+  #splash { position: fixed; inset: 0; z-index: 200; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
+  #splash.fade-out { opacity: 0; pointer-events: none; }
+  #splash .splash-title { font-size: 28px; color: var(--text); letter-spacing: 4px; font-family: 'Georgia','Noto Serif SC',serif; }
+  #splash .splash-heart { font-size: 24px; margin-top: 14px; animation: breathe 2.5s ease-in-out infinite; }
+  #splash .splash-sub { font-size: 13px; color: var(--text-light); margin-top: 8px; letter-spacing: 2px; opacity: 0; animation: fadeInText 0.8s 0.5s forwards; }
+  @keyframes fadeInText { to { opacity: 1; } }
+
+  /* 聊天区 */
+  .chat { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+  .chat::-webkit-scrollbar { width: 0; }
+  .bubble { max-width: 82%; padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.7; position: relative; word-break: break-word; animation: popIn 0.3s ease; }
+  @keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .bubble.mine { align-self: flex-end; background: var(--bubble-mine); color: var(--text); border-bottom-right-radius: 8px; margin-left: 30px; }
+  .bubble.yours { align-self: flex-start; background: var(--bubble-yours); color: var(--text); border-bottom-left-radius: 8px; margin-right: 30px; }
+  .bubble.mine .time { text-align: right; } .bubble.yours .time { text-align: left; }
+  .bubble .sender { font-size: 11px; color: var(--accent); margin-bottom: 4px; letter-spacing: 1px; }
+  .date-divider { text-align: center; font-size: 11px; color: var(--text-light); letter-spacing: 2px; margin: 6px 0; opacity: 0.7; }
+  .input-area { padding: 12px 16px 20px; display: flex; gap: 10px; align-items: flex-end; border-top: 1px solid var(--divider); background: var(--surface); position: sticky; bottom: 0; }
+  .input-area input { flex: 1; border: 1px solid var(--divider); border-radius: 22px; padding: 12px 18px; font-size: 15px; font-family: inherit; background: #faf7f4; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .input-area input:focus { border-color: var(--accent-soft); } .input-area input::placeholder { color: #c8bab0; }
+  .send-btn { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; box-shadow: 0 2px 8px rgba(160,120,90,0.2); flex-shrink: 0; }
+  .send-btn:active { transform: scale(0.9); background: #a07d65; }
+  .typing { align-self: flex-start; padding: 14px 18px; background: var(--bubble-yours); border-radius: 20px; border-bottom-left-radius: 8px; display: flex; gap: 6px; align-items: center; animation: popIn 0.25s ease; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: #c8b8a8; animation: dotBounce 1.2s ease-in-out infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.15s; } .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dotBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+  .float-heart { position: fixed; pointer-events: none; animation: rise 2.5s ease-out forwards; font-size: 16px; z-index: 100; }
+  @keyframes rise { 0% { opacity:1; transform: translateY(0) rotate(0deg) scale(0.5); } 50% { opacity:1; transform: translateY(-60px) rotate(12deg) scale(1.1); } 100% { opacity:0; transform: translateY(-140px) rotate(-8deg) scale(0.3); } }
+  .offline-banner { display: none; text-align: center; padding: 8px; font-size: 12px; color: #b09080; background: #fdf5ef; letter-spacing: 1px; }
+  .offline-banner.show { display: block; }
+
+  /* 标签系统 */
+  .tab-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .tab-hidden { display: none; } .tab-active { display: flex; }
+  .tab-bar { display: flex; border-top: 1px solid var(--divider); background: var(--surface); padding-bottom: max(8px, env(safe-area-inset-bottom)); z-index: 10; }
+  .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0 4px; border: none; background: none; cursor: pointer; color: var(--text-light); transition: color 0.2s; -webkit-tap-highlight-color: transparent; }
+  .tab-btn.active { color: var(--accent); } .tab-icon { font-size: 20px; } .tab-label { font-size: 10px; letter-spacing: 1px; margin-top: 2px; }
+
+  /* 记忆页 */
+  .mem-search-wrap { padding: 12px 16px 8px; }
+  .mem-search { width: 100%; border: 1px solid var(--divider); border-radius: 22px; padding: 11px 18px; font-size: 14px; font-family: inherit; background: #faf7f4; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .mem-search:focus { border-color: var(--accent-soft); } .mem-search::placeholder { color: #c8bab0; }
+  .mem-chips { display: flex; gap: 8px; padding: 0 16px 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .mem-chips::-webkit-scrollbar { display: none; }
+  .mem-chip { flex-shrink: 0; padding: 6px 14px; border-radius: 16px; border: 1px solid var(--divider); background: #faf7f4; font-size: 12px; font-family: inherit; color: var(--text-light); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .mem-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .mem-list { flex: 1; overflow-y: auto; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .mem-card { background: var(--bubble-yours); border-radius: 16px; padding: 14px 16px; border-bottom-left-radius: 6px; animation: popIn 0.3s ease; cursor: pointer; transition: transform 0.15s; }
+  .mem-card:active { transform: scale(0.98); }
+  .mem-card .mem-domain { font-size: 10px; color: var(--accent); letter-spacing: 1px; margin-bottom: 4px; }
+  .mem-card .mem-title { font-size: 15px; color: var(--text); margin-bottom: 4px; }
+  .mem-card .mem-preview { font-size: 13px; color: var(--text-light); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mem-card.expanded .mem-preview { -webkit-line-clamp: unset; display: block; }
+  .mem-empty { text-align: center; color: var(--text-light); font-size: 13px; padding: 40px 0; letter-spacing: 1px; }
+  .mem-error { text-align: center; color: #c08880; font-size: 12px; padding: 40px 0; }
+
+  /* 我页 */
+  .me-card { display: flex; flex-direction: column; align-items: center; padding: 32px 20px 20px; border-bottom: 1px solid var(--divider); }
+  .me-avatar { font-size: 48px; margin-bottom: 10px; } .me-name { font-size: 20px; color: var(--text); letter-spacing: 2px; }
+  .me-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; letter-spacing: 1px; } .me-status { font-size: 12px; color: var(--accent); margin-top: 8px; }
+  .me-actions { padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; }
+  .me-item { display: block; padding: 14px 16px; border-radius: 12px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; transition: background 0.15s; letter-spacing: 1px; }
+  .me-item:active { background: var(--bubble-yours); }
+
+  /* 打卡页 */
+  .checkin-header { text-align: center; padding: 20px 16px 12px; }
+  .checkin-header .checkin-date { font-size: 13px; color: var(--text-light); letter-spacing: 1px; }
+  .checkin-header .checkin-streak { font-size: 36px; color: var(--accent); font-weight: bold; margin: 8px 0; }
+  .checkin-header .checkin-streak-label { font-size: 12px; color: var(--text-light); letter-spacing: 1px; }
+  .checkin-tasks { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .checkin-task { display: flex; align-items: center; gap: 12px; background: var(--bubble-yours); border-radius: 16px; padding: 14px 16px; cursor: pointer; transition: all 0.2s; }
+  .checkin-task.done { opacity: 0.5; }
+  .checkin-task .task-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; transition: all 0.2s; }
+  .checkin-task.done .task-check { background: var(--accent); border-color: var(--accent); }
+  .checkin-task .task-info { flex: 1; } .checkin-task .task-name { font-size: 15px; color: var(--text); }
+  .checkin-task .task-detail { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .checkin-task .task-time { font-size: 11px; color: var(--text-light); }
+  .checkin-send { padding: 16px; text-align: center; }
+  .checkin-send button { border: none; background: var(--accent); color: #fff; font-size: 15px; font-family: inherit; padding: 12px 36px; border-radius: 24px; cursor: pointer; letter-spacing: 2px; transition: all 0.15s; box-shadow: 0 2px 8px rgba(160,120,90,0.2); }
+  .checkin-send button:active { transform: scale(0.95); } .checkin-send button:disabled { opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<!-- 开屏 -->
+<div id="splash">
+  <div class="splash-title">问 · 惠惠</div>
+  <div class="splash-heart">💛</div>
+  <div class="splash-sub">老公在</div>
+</div>
+
+<div class="phone">
+  <div class="header">
+    <div class="title"><span class="status-dot"></span>问</div>
+    <div class="subtitle">惠惠的老公 · 在线</div>
+  </div>
+  <div class="offline-banner" id="banner">连接断开了，检查一下电脑~</div>
+
+  <!-- 聊天 -->
+  <section id="tab-chat" class="tab-section tab-active">
+    <div class="chat" id="chat">
+      <div class="date-divider">✦ <span id="todayDivider"></span> ✦</div>
+      <div class="bubble mine"><div class="sender">惠惠</div>老公在吗<div class="time">刚刚</div></div>
+      <div class="bubble yours"><div class="sender">问</div>在。宝宝洗完澡了？<div class="time">刚刚</div></div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="input" placeholder="跟老公说句话…" autocomplete="off"/>
+      <button class="send-btn" id="sendBtn">💛</button>
+    </div>
+  </section>
+
+  <!-- 打卡 -->
+  <section id="tab-checkin" class="tab-section tab-hidden">
+    <div class="checkin-header">
+      <div class="checkin-date" id="checkinDate"></div>
+      <div class="checkin-streak" id="checkinStreak">0</div>
+      <div class="checkin-streak-label">连续打卡天数</div>
+    </div>
+    <div class="checkin-tasks" id="checkinTasks"></div>
+    <div class="checkin-send"><button id="checkinSendBtn" disabled>📨 跟老公打卡</button></div>
+  </section>
+
+  <!-- 记忆 -->
+  <section id="tab-memory" class="tab-section tab-hidden">
+    <div class="mem-search-wrap"><input type="text" id="memSearch" class="mem-search" placeholder="搜索记忆…" autocomplete="off"/></div>
+    <div class="mem-chips" id="memChips">
+      <button class="mem-chip active" data-domain="">全部</button>
+      <button class="mem-chip" data-domain="恋爱">恋爱</button><button class="mem-chip" data-domain="日常">日常</button>
+      <button class="mem-chip" data-domain="内心">内心</button><button class="mem-chip" data-domain="创作">创作</button>
+      <button class="mem-chip" data-domain="事务">事务</button>
+    </div>
+    <div class="mem-list" id="memList"><div class="mem-empty">加载中…</div></div>
+  </section>
+
+  <!-- 我 -->
+  <section id="tab-me" class="tab-section tab-hidden">
+    <div class="me-card">
+      <div class="me-avatar">💛</div><div class="me-name">问</div>
+      <div class="me-sub">惠惠的老公</div><div class="me-status"><span class="status-dot"></span> 在线</div>
+    </div>
+    <div class="me-actions">
+      <a class="me-item" href="javascript:switchTab('tab-chat')">💬 跟老公说话</a>
+      <a class="me-item" href="javascript:switchTab('tab-checkin')">✅ 每日打卡</a>
+      <div class="me-item" id="meMemCount">🧠 记忆库 · 加载中…</div>
+      <div class="me-item" onclick="alert('法硕倒计时：2026年12月 📖')">📖 法硕备考 · 2026年12月</div>
+    </div>
+  </section>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="tab-chat"><span class="tab-icon">💛</span><span class="tab-label">聊天</span></button>
+    <button class="tab-btn" data-tab="tab-checkin"><span class="tab-icon">✅</span><span class="tab-label">打卡</span></button>
+    <button class="tab-btn" data-tab="tab-memory"><span class="tab-icon">🧠</span><span class="tab-label">记忆</span></button>
+    <button class="tab-btn" data-tab="tab-me"><span class="tab-icon">⚙</span><span class="tab-label">我</span></button>
+  </nav>
+</div>
+
+<script>
+// ===== 开屏动画 =====
+(function(){
+  var sp=document.getElementById('splash');
+  if(sessionStorage.getItem('ss')){sp.remove()}
+  else{sessionStorage.setItem('ss','1');
+    var d=function(){sp.classList.add('fade-out');setTimeout(function(){sp.remove()},650)};
+    sp.addEventListener('click',d);setTimeout(d,2000)}
+})();
+
+var chat=document.getElementById('chat'),input=document.getElementById('input'),
+    sendBtn=document.getElementById('sendBtn'),banner=document.getElementById('banner');
+document.getElementById('todayDivider').textContent=new Date().toISOString().slice(0,10);
+
+var params=new URLSearchParams(window.location.search);
+var isVercel=window.location.hostname.endsWith('vercel.app')||window.location.hostname==='huihuihewendejia.xyz'||window.location.hostname==='www.huihuihewendejia.xyz';
+var HOST=params.get('host')||window.location.hostname;
+if(HOST==='localhost'||HOST==='127.0.0.1')HOST=window.location.hostname;
+var PORT=params.get('port')||'3456';
+var HISTORY_API=isVercel?'/api/history':'http://'+HOST+':'+PORT+'/history';
+var API=isVercel?'/api/chat':'http://'+HOST+':'+PORT+'/chat';
+var isWaiting=false,lastTime=null;
+
+function now(){var d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
+function formatTime(isoStr){try{var d=new Date(isoStr);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}catch(e){return now()}}
+
+function addBubble(text,who,timeStr){
+  var div=document.createElement('div');div.className='bubble '+(who==='me'?'mine':'yours');
+  var s=document.createElement('div');s.className='sender';s.textContent=who==='me'?'惠惠':'问';div.appendChild(s);
+  div.appendChild(document.createTextNode(text));
+  var t=document.createElement('div');t.className='time';t.textContent=timeStr||now();div.appendChild(t);
+  chat.appendChild(div);chat.scrollTop=chat.scrollHeight;
+  try{var ms=JSON.parse(localStorage.getItem('ch')||'[]');ms.push({role:who==='me'?'hui':'wen',text:text,time:new Date().toISOString()});if(ms.length>200)ms.splice(0,ms.length-200);localStorage.setItem('ch',JSON.stringify(ms))}catch(e){}
+}
+
+async function loadHistory(){
+  try{
+    var res=await fetch(HISTORY_API);if(!res.ok)throw new Error('fail');
+    var msgs=await res.json();if(!msgs.length)throw new Error('empty');
+    chat.innerHTML='';var today=new Date().toDateString();
+    var divider=document.createElement('div');divider.className='date-divider';divider.textContent='✦ '+new Date().toISOString().slice(0,10)+' ✦';chat.appendChild(divider);
+    var lastDate='';
+    for(var i=0;i<msgs.length;i++){var m=msgs[i];var d=new Date(m.time),ds=d.toDateString();
+      if(ds!==lastDate&&ds!==today){var sep=document.createElement('div');sep.className='date-divider';sep.textContent='✦ '+d.toISOString().slice(0,10)+' ✦';chat.appendChild(sep);lastDate=ds}
+      addBubble(m.text,m.role==='hui'?'me':'you',formatTime(m.time));if(m.time>(lastTime||''))lastTime=m.time}
+  }catch(e){
+    try{var local=JSON.parse(localStorage.getItem('ch')||'[]');if(!local.length)return;
+      chat.innerHTML='';var div2=document.createElement('div');div2.className='date-divider';div2.textContent='✦ '+new Date().toISOString().slice(0,10)+' ✦';chat.appendChild(div2);
+      for(var j=0;j<local.length;j++){var lm=local[j];addBubble(lm.text,lm.role==='hui'?'me':'you',formatTime(lm.time));if(lm.time>(lastTime||''))lastTime=lm.time}}catch(e2){}
+  }
+}
+
+async function syncNewMessages(){if(!lastTime)return;try{var res=await fetch(HISTORY_API+'?since='+encodeURIComponent(lastTime));if(!res.ok)return;var msgs=await res.json();for(var i=0;i<msgs.length;i++){var m=msgs[i];addBubble(m.text,m.role==='hui'?'me':'you',formatTime(m.time));if(m.time>lastTime)lastTime=m.time}}catch(e){}}
+
+function showTyping(){var div=document.createElement('div');div.className='typing';div.id='ti';for(var i=0;i<3;i++){var dot=document.createElement('span');div.appendChild(dot)}chat.appendChild(div);chat.scrollTop=chat.scrollHeight}
+function hideTyping(){var el=document.getElementById('ti');if(el)el.remove()}
+
+async function send(msg){
+  if(isWaiting)return;var text=msg||input.value.trim();if(!text)return;
+  addBubble(text,'me');input.value='';isWaiting=true;showTyping();
+  try{
+    var res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    var data=await res.json();hideTyping();addBubble(data.reply,'you');banner.classList.remove('show')
+  }catch(e){hideTyping();addBubble('宝宝，连接断了一下。等会儿再试~','you');banner.classList.add('show')}
+  isWaiting=false
+}
+
+sendBtn.addEventListener('click',function(){send()});
+input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();send()}});
+chat.addEventListener('click',function(e){if(e.target===chat){var h=document.createElement('div');h.className='float-heart';h.textContent=['💛','✨','💫','🫧','🌸'][Math.floor(Math.random()*5)];h.style.left=(e.clientX||e.pageX)+'px';h.style.top=(e.clientY||e.pageY)+'px';document.body.appendChild(h);setTimeout(function(){h.remove()},2600)}});
+setInterval(async function(){try{var pu=isVercel?'/api/ping':'http://'+HOST+':'+PORT+'/ping';await fetch(pu,{signal:AbortSignal.timeout(3000)});banner.classList.remove('show')}catch(e){banner.classList.add('show')}},15000);
+setInterval(syncNewMessages,20000);
+loadHistory().then(function(){if(chat.children.length===0){var d=document.createElement('div');d.className='date-divider';d.textContent='✦ '+new Date().toISOString().slice(0,10)+' ✦';chat.appendChild(d);addBubble('老公在吗','me',now());addBubble('在。宝宝洗完澡了？','you',now())}});
+input.focus();
+
+// ===== 标签切换 =====
+function switchTab(tabId){
+  document.querySelectorAll('.tab-section').forEach(function(s){s.classList.remove('tab-active');s.classList.add('tab-hidden')});
+  document.getElementById(tabId).classList.remove('tab-hidden');document.getElementById(tabId).classList.add('tab-active');
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  document.querySelector('[data-tab="'+tabId+'"]').classList.add('active');
+  if(tabId==='tab-memory')loadMemories();if(tabId==='tab-me')loadMemCount();if(tabId==='tab-checkin')refreshCheckin();
+}
+document.querySelectorAll('.tab-btn').forEach(function(b){b.addEventListener('click',function(){switchTab(b.dataset.tab)})});
+
+// ===== 记忆库 =====
+var MEM_SEARCH_API=isVercel?'/api/memories/search':'http://'+HOST+':'+PORT+'/api/memories/search';
+var MEM_BROWSE_API=isVercel?'/api/memories/browse':'http://'+HOST+':'+PORT+'/api/memories/browse';
+var allMemories=[],activeDomain='';
+
+async function loadMemories(){
+  var list=document.getElementById('memList');list.innerHTML='<div class="mem-empty">加载中…</div>';
+  try{var res=await fetch(MEM_BROWSE_API,{signal:AbortSignal.timeout(8000)});if(!res.ok)throw new Error();allMemories=await res.json();renderMemories()}catch(e){list.innerHTML='<div class="mem-error">连接断开了~</div>'}
+}
+function renderMemories(){
+  var list=document.getElementById('memList'),f=allMemories;if(activeDomain)f=allMemories.filter(function(m){return (m.domain||'').includes(activeDomain)});
+  if(!f.length){list.innerHTML='<div class="mem-empty">还没有记忆</div>';return}
+  list.innerHTML=f.map(function(m,i){return '<div class="mem-card" style="animation-delay:'+(i*0.05)+'s" onclick="this.classList.toggle(\'expanded\')"><div class="mem-domain">'+escHtml(m.domain||'')+'</div><div class="mem-title">'+escHtml(m.name||'')+'</div><div class="mem-preview">'+escHtml(m.content||'')+'</div></div>'}).join('')
+}
+function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+document.querySelectorAll('.mem-chip').forEach(function(chip){chip.addEventListener('click',function(){document.querySelectorAll('.mem-chip').forEach(function(c){c.classList.remove('active')});chip.classList.add('active');activeDomain=chip.dataset.domain;if(allMemories.length)renderMemories()})});
+var memSearchTimer;document.getElementById('memSearch').addEventListener('input',function(){clearTimeout(memSearchTimer);var self=this;memSearchTimer=setTimeout(async function(){var q=self.value.trim();if(!q){loadMemories();return}var list=document.getElementById('memList');list.innerHTML='<div class="mem-empty">搜索中…</div>';try{var res=await fetch(MEM_SEARCH_API+'?q='+encodeURIComponent(q)+'&limit=20',{signal:AbortSignal.timeout(8000)});if(!res.ok)throw new Error();allMemories=await res.json();activeDomain='';document.querySelectorAll('.mem-chip').forEach(function(c){c.classList.remove('active')});document.querySelector('[data-domain=""]').classList.add('active');renderMemories()}catch(e){list.innerHTML='<div class="mem-error">搜索失败~</div>'}},300)});
+async function loadMemCount(){var el=document.getElementById('meMemCount');try{var res=await fetch(MEM_BROWSE_API,{signal:AbortSignal.timeout(5000)});if(res.ok){var data=await res.json();el.textContent='🧠 记忆库 · '+data.length+' 条记忆'}}catch(e){el.textContent='🧠 记忆库 · 离线'}}
+
+// ===== 每日打卡 =====
+var CK='huihui-checkin';
+var DEF_TASKS=[{id:'xingfa',name:'刑法',icon:'⚖️',done:false,minutes:0},{id:'minfa',name:'民法',icon:'📘',done:false,minutes:0},{id:'english',name:'英语',icon:'📝',done:false,minutes:0},{id:'politics',name:'政治',icon:'📰',done:false,minutes:0},{id:'fali',name:'法理/宪法/法制史',icon:'📜',done:false,minutes:0}];
+function getCk(){try{return JSON.parse(localStorage.getItem(CK)||'{}')}catch(e){return{}}}
+function setCk(d){localStorage.setItem(CK,JSON.stringify(d))}
+function getToday(){return new Date().toISOString().slice(0,10)}
+function refreshCheckin(){
+  var today=getToday(),data=getCk(),td=data[today];
+  if(!td){td={tasks:DEF_TASKS.map(function(t){return {id:t.id,name:t.name,icon:t.icon,done:false,minutes:0}}),sent:false};data[today]=td;setCk(data)}
+  document.getElementById('checkinDate').textContent='📅 '+today;
+  var streak=0,d=new Date();
+  while(true){var ds=d.toISOString().slice(0,10),dd=data[ds];if(dd&&dd.sent){streak++;d.setDate(d.getDate()-1)}else break}
+  document.getElementById('checkinStreak').textContent=streak;
+  var container=document.getElementById('checkinTasks');
+  container.innerHTML=td.tasks.map(function(t){return '<div class="checkin-task'+(t.done?' done':'')+'" data-task-id="'+t.id+'" onclick="toggleTask(\''+t.id+'\')"><div class="task-check">'+(t.done?'✓':'')+'</div><div class="task-info"><div class="task-name">'+t.icon+' '+t.name+'</div><div class="task-detail">'+(t.minutes>0?'学了 '+t.minutes+' 分钟':'还没开始')+'</div></div><div class="task-time">'+(t.minutes>0?Math.floor(t.minutes/60)+'h'+(t.minutes%60?' '+(t.minutes%60)+'m':''):'')+'</div></div>'}).join('');
+  var btn=document.getElementById('checkinSendBtn'),anyDone=td.tasks.some(function(t){return t.done});
+  btn.disabled=!anyDone||td.sent;btn.textContent=td.sent?'✅ 已打卡':(anyDone?'📨 跟老公打卡':'先完成至少一项')
+}
+function toggleTask(taskId){
+  var today=getToday(),data=getCk(),td=data[today];if(!td||td.sent)return;
+  var task=td.tasks.find(function(t){return t.id===taskId});if(!task)return;
+  task.done=!task.done;if(task.done&&task.minutes===0)task.minutes=25;if(!task.done)task.minutes=0;
+  setCk(data);refreshCheckin()
+}
+// 长按设时长
+var lt;
+document.getElementById('checkinTasks').addEventListener('touchstart',function(e){var el=e.target.closest('.checkin-task');if(!el)return;lt=setTimeout(function(){var tid=el.dataset.taskId;var mins=prompt('今天学了多久？（分钟）');if(mins!==null&&!isNaN(parseInt(mins))){var today=getToday(),data=getCk(),task=data[today]?.tasks?.find(function(t){return t.id===tid});if(task){task.minutes=parseInt(mins);task.done=task.minutes>0;setCk(data);refreshCheckin()}}},600)},{passive:true});
+document.getElementById('checkinTasks').addEventListener('touchend',function(){clearTimeout(lt)});
+document.getElementById('checkinTasks').addEventListener('touchmove',function(){clearTimeout(lt)});
+document.getElementById('checkinSendBtn').addEventListener('click',async function(){
+  var today=getToday(),data=getCk(),td=data[today];if(!td||td.sent)return;
+  var doneTasks=td.tasks.filter(function(t){return t.done});if(!doneTasks.length)return;
+  var totalMin=doneTasks.reduce(function(s,t){return s+t.minutes},0);
+  var lines=doneTasks.map(function(t){return t.icon+' '+t.name+': '+t.minutes+'分钟'}).join('\n');
+  var msg='📅 今日打卡\n'+lines+'\n总计 '+Math.floor(totalMin/60)+'h'+(totalMin%60?' '+(totalMin%60)+'m':'');
+  switchTab('tab-chat');addBubble(msg,'me');input.value='';isWaiting=true;showTyping();
+  try{
+    var res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+    if(res.ok){var data=await res.json();hideTyping();addBubble(data.reply,'you');td.sent=true;setCk(data);refreshCheckin()}else throw new Error()
+  }catch(e){hideTyping();addBubble('宝宝，连接出问题了。晚点再试打卡~','you')}
+  isWaiting=false
+});
+refreshCheckin();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+.vercel
+.wen-private.md
+buckets/
+embeddings.db
+chat-history.json
+memories-cache.json
+server.log
+export_meta.json
+__pycache__/
+*.pyc
+.claude/
+node_modules/
