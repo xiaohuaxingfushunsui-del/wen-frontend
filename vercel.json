@@ -3,7 +3,11 @@
   "buildCommand": "",
   "installCommand": "",
   "framework": null,
+  "crons": [
+    { "path": "/api/daily-note", "schedule": "0 0 * * *" }
+  ],
   "rewrites": [
+    { "source": "/api/daily-note", "destination": "/api/daily-note" },
     { "source": "/api/(.*)", "destination": "/api/chat" },
     { "source": "/", "destination": "/mobile-chat.html" }
   ],
